@@ -1,5 +1,5 @@
-import { validationError } from "../shared/errors";
-import { SnapFillClient, ToolDefinition, toToolResult } from "../shared/types";
+import { validationError } from '../shared/errors';
+import { type SnapFillClient, type ToolDefinition, toToolResult } from '../shared/types';
 
 interface KnowledgeEntry {
   title: string;
@@ -13,13 +13,13 @@ function normalizeEntries(input: unknown): KnowledgeEntry[] | null {
 
   const normalized: KnowledgeEntry[] = [];
   for (const item of input) {
-    if (!item || typeof item !== "object") {
+    if (!item || typeof item !== 'object') {
       return null;
     }
 
     const record = item as Record<string, unknown>;
-    const title = typeof record.title === "string" ? record.title.trim() : "";
-    const content = typeof record.content === "string" ? record.content.trim() : "";
+    const title = typeof record.title === 'string' ? record.title.trim() : '';
+    const content = typeof record.content === 'string' ? record.content.trim() : '';
 
     if (!title || !content) {
       return null;
@@ -33,38 +33,41 @@ function normalizeEntries(input: unknown): KnowledgeEntry[] | null {
 
 export function createIngestInstantKnowledgeTool(client: SnapFillClient): ToolDefinition {
   return {
-    name: "snapfill_ingest_instant_knowledge",
+    name: 'snapfill_ingest_instant_knowledge',
     description:
-      "Ingest structured text entries as instant knowledge files when no usable knowledge base is available.",
+      'Ingest structured text entries as instant knowledge files when no usable knowledge base is available.',
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
         entries: {
-          type: "array",
+          type: 'array',
           minItems: 1,
           items: {
-            type: "object",
+            type: 'object',
             properties: {
-              title: { type: "string" },
-              content: { type: "string" },
+              title: { type: 'string' },
+              content: { type: 'string' },
             },
-            required: ["title", "content"],
+            required: ['title', 'content'],
           },
         },
-        persist: { type: "boolean", default: true },
+        persist: { type: 'boolean', default: true },
       },
-      required: ["entries"],
+      required: ['entries'],
     },
     async execute(_id, params) {
       const entries = normalizeEntries(params.entries);
       if (!entries) {
         return toToolResult(
-          validationError("entries must be a non-empty array of {title, content}"),
+          validationError('entries must be a non-empty array of {title, content}'),
         );
       }
 
-      const persist = typeof params.persist === "boolean" ? params.persist : true;
-      const envelope = await client.post("/knowledge/instant", { entries, persist });
+      const persist = typeof params.persist === 'boolean' ? params.persist : true;
+      const envelope = await client.post('/knowledge/instant', {
+        entries,
+        persist,
+      });
       return toToolResult(envelope);
     },
   };

@@ -1,5 +1,5 @@
-import { validationError } from "../shared/errors";
-import { SnapFillClient, ToolDefinition, toToolResult } from "../shared/types";
+import { validationError } from '../shared/errors';
+import { type SnapFillClient, type ToolDefinition, toToolResult } from '../shared/types';
 
 interface JobStatusPayload {
   status?: string;
@@ -24,19 +24,19 @@ function normalizeFieldSuggestions(payload: JobStatusPayload): unknown {
 
 export function createGetJobStatusTool(client: SnapFillClient): ToolDefinition {
   return {
-    name: "snapfill_get_job_status",
-    description: "Get current job status, progress and stage info.",
+    name: 'snapfill_get_job_status',
+    description: 'Get current job status, progress and stage info.',
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
-        job_id: { type: "string" },
+        job_id: { type: 'string' },
       },
-      required: ["job_id"],
+      required: ['job_id'],
     },
     async execute(_id, params) {
-      const jobId = typeof params.job_id === "string" ? params.job_id.trim() : "";
+      const jobId = typeof params.job_id === 'string' ? params.job_id.trim() : '';
       if (!jobId) {
-        return toToolResult(validationError("job_id is required"));
+        return toToolResult(validationError('job_id is required'));
       }
 
       const envelope = await client.get<JobStatusPayload>(`/jobs/${jobId}/status`);

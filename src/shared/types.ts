@@ -15,12 +15,10 @@ export interface ToolError {
   user_message: string;
 }
 
-export type ToolEnvelope<T = unknown> =
-  | { ok: true; data: T }
-  | { ok: false; error: ToolError };
+export type ToolEnvelope<T = unknown> = { ok: true; data: T } | { ok: false; error: ToolError };
 
 export interface ToolExecutionResult {
-  content: Array<{ type: "text"; text: string }>;
+  content: Array<{ type: 'text'; text: string }>;
   isError?: boolean;
 }
 
@@ -47,7 +45,7 @@ export interface SnapFillClient {
 
 export function toToolResult<T>(envelope: ToolEnvelope<T>): ToolExecutionResult {
   return {
-    content: [{ type: "text", text: JSON.stringify(envelope) }],
+    content: [{ type: 'text', text: JSON.stringify(envelope) }],
     isError: !envelope.ok,
   };
 }
