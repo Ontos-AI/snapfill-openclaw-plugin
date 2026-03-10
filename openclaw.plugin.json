@@ -3,7 +3,6 @@
   "name": "SnapFill Plugin",
   "description": "SnapFill tools for OpenClaw",
   "version": "0.1.0",
-  "entry": "./src/index.ts",
   "skills": ["./skills/snapfill"],
   "configSchema": {
     "type": "object",
