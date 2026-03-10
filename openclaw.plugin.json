@@ -2,7 +2,7 @@
   "id": "snapfill",
   "name": "SnapFill Plugin",
   "description": "SnapFill tools for OpenClaw",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "skills": ["./skills/snapfill"],
   "configSchema": {
     "type": "object",
