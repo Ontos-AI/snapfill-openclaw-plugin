@@ -84,12 +84,39 @@ On stage transitions, send a clear notice:
 
 If the same `progress` value appears in 3 or more consecutive polls, send once: "Still processing, please hang on..." — then continue polling silently until progress changes.
 
-## Field Confirmation Rule (Hard Requirement)
+## Value Priority Rule
+
+When determining what value to use for any field, always apply the following priority order:
+
+1. **User's explicit instruction in the current conversation** (highest)
+   - Anything the user has stated, corrected, or specified in this conversation session.
+   - Examples: "use John as the name", "change the date to tomorrow", "set the company to Acme".
+   - This includes instructions given **before** the field list is presented, not just replies to it.
+
+2. **User's confirmation or edit during the field review step**
+   - Values the user explicitly accepted or modified when reviewing the field list.
+
+3. **`suggested_value` from `field_suggestions`** (lowest — knowledge base fallback)
+   - Use only if the user has given no instruction for that field in this conversation.
+
+**Never let knowledge base content override something the user has explicitly stated in this
+conversation — regardless of when in the conversation the instruction was given.**
+
+If the user's instruction is ambiguous (e.g., "use my usual info"), ask for clarification
+before applying any value. Do not silently fall back to the knowledge base.
+
+## Field Confirmation Rule — HARD BLOCK
+
+**This is a hard requirement. `snapfill_finalize_job` MUST NOT be called under any
+circumstances until the user has explicitly confirmed the fields in this conversation turn.
+Skipping this step — even if the suggested values appear correct — is a violation of the
+`confirm_required` contract and will be treated as a critical failure.**
 
 When job status reaches `fillchart_ready`:
 
-1. Read `field_suggestions` from tool output.
-2. Present **all** fields as a numbered list with their suggested values:
+1. Read `field_suggestions` from the tool output. Apply the Value Priority Rule above to
+   override any suggested values with what the user has already stated in this conversation.
+2. Present **all** fields as a numbered list with their resolved values:
    ```
    Here are the fields I'll fill in. Please review and let me know if anything needs to change:
 
@@ -100,15 +127,19 @@ When job status reaches `fillchart_ready`:
 
    Does everything look correct? If you'd like to change any field, tell me the number and the new value.
    ```
-3. Wait for the user's response.
+3. **Stop and wait.** Do not proceed. Do not call `snapfill_finalize_job`. Wait for the
+   user's reply in this conversation.
 4. If the user requests changes:
    - Apply all changes to a local field snapshot.
    - Re-display the **complete updated list** (not just the changed items).
    - Ask for confirmation again.
    - Repeat until the user explicitly confirms.
-5. Only call `snapfill_finalize_job` after the user explicitly confirms (e.g., "yes", "looks good", "submit", "confirm").
+5. Only call `snapfill_finalize_job` after the user sends an explicit confirmation
+   (e.g., "yes", "looks good", "submit", "confirm", "go ahead", "okay").
 
-**Never call `snapfill_finalize_job` before explicit user confirmation.**
+**Do not interpret silence, a prior instruction, or a general "fill the form" request as
+confirmation. Confirmation must come from a message in the current conversation after the
+field list has been presented.**
 
 ## Result Delivery
 

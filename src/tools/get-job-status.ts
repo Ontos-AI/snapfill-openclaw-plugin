@@ -4,6 +4,7 @@ import { type SnapFillClient, type ToolDefinition, toToolResult } from '../share
 interface JobStatusPayload {
   status?: string;
   field_suggestions?: unknown;
+  fillchart_fields?: unknown;
   preview?: { fields?: unknown };
   fillchart_fields_snapshot?: unknown;
   [key: string]: unknown;
@@ -12,6 +13,9 @@ interface JobStatusPayload {
 function normalizeFieldSuggestions(payload: JobStatusPayload): unknown {
   if (payload.field_suggestions !== undefined) {
     return payload.field_suggestions;
+  }
+  if (payload.fillchart_fields !== undefined) {
+    return payload.fillchart_fields;
   }
   if (payload.preview && payload.preview.fields !== undefined) {
     return payload.preview.fields;
