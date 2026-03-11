@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2026-03-11
+
+### Added
+
+- Expanded skill activation triggers and added resume flow for existing `job_id`.
+- Added field preview confirmation workflow with a hard confirmation gate and user-instruction priority.
+- Added progress updates on every status poll plus message-based result delivery guidance.
+- Added retry guidance for expired download links.
+
+### Fixed
+
+- Normalized `field_suggestions` to recognize `fillchart_fields` and snapshot variants.
+- Deferred config loading to tool execution time to avoid missing config access during registration.
+
 ## [0.1.0] - 2026-03-05
 
 ### Added
