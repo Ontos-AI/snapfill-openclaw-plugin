@@ -2,7 +2,7 @@
   "id": "snapfill",
   "name": "SnapFill Plugin",
   "description": "SnapFill tools for OpenClaw",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "skills": ["./skills/snapfill"],
   "configSchema": {
     "type": "object",
@@ -11,7 +11,7 @@
       "baseUrl": { "type": "string" },
       "apiKey": { "type": "string" },
       "timeoutSeconds": { "type": "integer", "default": 300 },
-      "pollIntervalMs": { "type": "integer", "default": 3000 },
+      "pollIntervalMs": { "type": "integer", "default": 1000 },
       "maxPollAttempts": { "type": "integer", "default": 100 },
       "kbPollTimeoutSeconds": { "type": "integer", "default": 60 }
     },

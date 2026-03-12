@@ -64,7 +64,7 @@ Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
           "baseUrl": "https://api.snapfill.io/api/v1/fill-jobs",
           "apiKey": "sfk_xxx",
           "timeoutSeconds": 300,
-          "pollIntervalMs": 3000,
+          "pollIntervalMs": 1000,
           "maxPollAttempts": 100,
           "kbPollTimeoutSeconds": 60
         }
@@ -73,6 +73,8 @@ Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
   }
 }
 ```
+
+For more responsive progress updates, keep `pollIntervalMs` around `1000`. Lower values can increase API traffic.
 
 ## Verify Installation
 

@@ -35,11 +35,12 @@ Always follow this order. Do not skip required user confirmation.
 2. Optional: `snapfill_list_profiles`
 3. If no usable knowledge file: `snapfill_ingest_instant_knowledge`
 4. `snapfill_submit_job`
-5. Poll `snapfill_get_job_status` until `status = "fillchart_ready"` — report progress after every poll (see Polling Behavior)
-6. Present all field suggestions to user and collect confirmation or edits (see Field Confirmation Rule)
-7. `snapfill_finalize_job`
-8. Poll `snapfill_get_job_status` until `status = "succeeded"` — report progress after every poll (see Polling Behavior)
-9. `snapfill_get_job_result` — deliver result to user (see Result Delivery)
+5. Immediately send a short acknowledgement (for example: "✅ Job submitted. Starting analysis now...")
+6. Poll `snapfill_get_job_status` until `status = "fillchart_ready"` — report progress after every poll (see Polling Behavior)
+7. Present all field suggestions to user and collect confirmation or edits (see Field Confirmation Rule)
+8. `snapfill_finalize_job`
+9. Poll `snapfill_get_job_status` until `status = "succeeded"` — report progress after every poll (see Polling Behavior)
+10. `snapfill_get_job_result` — deliver result to user (see Result Delivery)
 
 ## Knowledge Source Fallback
 
@@ -54,9 +55,9 @@ If the user provides a `job_id` or asks about a form they previously submitted:
 
 1. Call `snapfill_get_job_status` with the provided `job_id`.
 2. Based on the returned status, continue from the appropriate step:
-   - `fillchart_ready` → go to Field Confirmation Rule (Step 6)
-   - `succeeded` → call `snapfill_get_job_result` and deliver the result (Step 9)
-   - `doc_fill_running` or `fillchart_running` → resume polling (Step 5 or 8)
+   - `fillchart_ready` → go to Field Confirmation Rule (Step 7)
+   - `succeeded` → call `snapfill_get_job_result` and deliver the result (Step 10)
+   - `doc_fill_running` or `fillchart_running` → resume polling (Step 6 or 9)
    - `failed` / `timeout` → inform the user with the error and suggest resubmitting
    - `cancelled` → inform the user and offer to start a new job
 
@@ -65,6 +66,11 @@ Do not restart the full flow from Step 1 if a valid `job_id` is available.
 ## Polling Behavior
 
 After **every** `snapfill_get_job_status` call, immediately send a short progress update to the user before polling again. Do not stay silent between polls.
+
+Polling cadence:
+- Wait about **1 second** between polls by default for responsiveness.
+- If `pollIntervalMs` is available, use it but cap at **2000ms** to avoid long silent gaps.
+- Never perform multiple polls in a single assistant turn. Each poll must be followed by a user-visible update.
 
 Format: `[emoji] [stage] — [progress]% · [message]`
 
@@ -82,7 +88,7 @@ On stage transitions, send a clear notice:
 - When entering `doc_fill_running`: "✍️ Confirmed. Generating your document now..."
 - When entering `succeeded`: "✅ Document ready!"
 
-If the same `progress` value appears in 3 or more consecutive polls, send once: "Still processing, please hang on..." — then continue polling silently until progress changes.
+If the same `progress` value appears in 3 or more consecutive polls, send once: "Still processing, please hang on..." — then keep polling with a short heartbeat update every 2 polls (for example: "Still working... no change yet") until progress changes.
 
 ## Value Priority Rule
 

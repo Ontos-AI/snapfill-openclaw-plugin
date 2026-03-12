@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-03-11
+
+### Added
+
+- Added explicit acknowledgement and heartbeat guidance during polling to keep users informed.
+
+### Changed
+
+- Tightened polling cadence guidance for more responsive progress updates.
+- Set default `pollIntervalMs` to `1000` and updated docs to match.
+
 ## [0.1.1] - 2026-03-11
 
 ### Added
