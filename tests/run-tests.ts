@@ -42,7 +42,7 @@ function testErrorMapping(): void {
 
 function testConfigParsing(): void {
   const parsed = parseSnapFillConfig({
-    baseUrl: ' https://api.snapfill.io/api/v1/fill-jobs ',
+    baseUrl: ' https://api.gosnapfill.com/v1/fill-jobs ',
     apiKey: ' sfk_demo_key ',
     timeoutSeconds: 300,
     pollIntervalMs: 3000,
@@ -51,7 +51,7 @@ function testConfigParsing(): void {
   });
 
   assert(
-    parsed.baseUrl === 'https://api.snapfill.io/api/v1/fill-jobs',
+    parsed.baseUrl === 'https://api.gosnapfill.com/v1/fill-jobs',
     'baseUrl should be trimmed',
   );
   assert(parsed.apiKey === 'sfk_demo_key', 'apiKey should be trimmed');

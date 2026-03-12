@@ -9,7 +9,7 @@ SnapFill plugin for OpenClaw. It registers `snapfill_*` tools and ships a defaul
 
 ## What This Plugin Provides
 
-- Tool layer: `snapfill_*` tools that call SnapFill Facade API (`/api/v1/fill-jobs`)
+- Tool layer: `snapfill_*` tools that call SnapFill Facade API (`/v1/fill-jobs`)
 - Skill layer: built-in `skills/snapfill/SKILL.md` with orchestration rules
 - Error normalization: user-friendly errors for common backend codes
 
@@ -61,7 +61,7 @@ Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
       "snapfill": {
         "enabled": true,
         "config": {
-          "baseUrl": "https://api.snapfill.io/api/v1/fill-jobs",
+          "baseUrl": "https://api.gosnapfill.com/v1/fill-jobs",
           "apiKey": "sfk_xxx",
           "timeoutSeconds": 300,
           "pollIntervalMs": 1000,
