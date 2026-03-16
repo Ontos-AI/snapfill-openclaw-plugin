@@ -1,6 +1,7 @@
 import { parseSnapFillConfig } from '../src/shared/client';
 import { normalizeHttpError, normalizeTimeoutError, validationError } from '../src/shared/errors';
 import type { SnapFillClient, ToolEnvelope, ToolExecutionResult } from '../src/shared/types';
+import { createListKnowledgeFilesTool } from '../src/tools/list-knowledge-files';
 import { createSubmitJobTool } from '../src/tools/submit-job';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -38,6 +39,26 @@ function testErrorMapping(): void {
     unknown.error.user_message.includes('操作失败'),
     'unknown code should map to fallback user message',
   );
+
+  const strategyMismatch = normalizeHttpError(422, {
+    code: 'KNOWLEDGE_STRATEGY_MISMATCH',
+    message: 'mixed knowledge kinds',
+  });
+  assert(!strategyMismatch.ok, 'strategy mismatch should be error envelope');
+  assert(
+    strategyMismatch.error.user_message.includes('知识来源和要求不一致'),
+    'knowledge strategy mismatch should map to a specific user message',
+  );
+
+  const formMismatch = normalizeHttpError(422, {
+    code: 'FORM_DATA_FIELD_MISMATCH',
+    message: 'field mismatch',
+  });
+  assert(!formMismatch.ok, 'form mismatch should be error envelope');
+  assert(
+    formMismatch.error.user_message.includes('字段名没有匹配到表格字段'),
+    'form mismatch should map to a specific user message',
+  );
 }
 
 function testConfigParsing(): void {
@@ -69,12 +90,16 @@ function testConfigParsing(): void {
 }
 
 function createMockClient() {
-  const calls: Array<{ path: string; body?: Record<string, unknown> }> = [];
+  const postCalls: Array<{ path: string; body?: Record<string, unknown> }> = [];
+  const getCalls: Array<{ path: string; query?: Record<string, unknown> }> = [];
 
   const client: SnapFillClient = {
-    get: async <T>() => ({ ok: true, data: {} as T }) as ToolEnvelope<T>,
+    get: async <T>(path: string, query?: Record<string, unknown>) => {
+      getCalls.push({ path, query });
+      return { ok: true, data: [] as T } as ToolEnvelope<T>;
+    },
     post: async <T>(path: string, body?: Record<string, unknown>) => {
-      calls.push({ path, body });
+      postCalls.push({ path, body });
       return {
         ok: true,
         data: { job_id: 'job_123', status: 'queued' } as T,
@@ -82,11 +107,11 @@ function createMockClient() {
     },
   };
 
-  return { client, calls };
+  return { client, postCalls, getCalls };
 }
 
 async function testSubmitJobValidation(): Promise<void> {
-  const { client, calls } = createMockClient();
+  const { client, postCalls } = createMockClient();
   const tool = createSubmitJobTool(client);
 
   const missingFile = await tool.execute('1', {
@@ -99,7 +124,7 @@ async function testSubmitJobValidation(): Promise<void> {
     missingFileEnvelope.error.code === 'VALIDATION_ERROR',
     'missing file_id should return validation error',
   );
-  const callCountAfterMissingFile = calls.length;
+  const callCountAfterMissingFile = postCalls.length;
   assert(callCountAfterMissingFile === 0, 'invalid input should not call downstream API');
 
   const wrongMode = await tool.execute('2', {
@@ -109,7 +134,7 @@ async function testSubmitJobValidation(): Promise<void> {
   });
   const wrongModeEnvelope = parseEnvelope(wrongMode);
   assert(!wrongModeEnvelope.ok, 'invalid mode should fail');
-  const callCountAfterWrongMode = calls.length;
+  const callCountAfterWrongMode = postCalls.length;
   assert(callCountAfterWrongMode === 0, 'invalid mode should not call downstream API');
 
   const okResult = await tool.execute('3', {
@@ -117,16 +142,17 @@ async function testSubmitJobValidation(): Promise<void> {
     mode: 'confirm_required',
     knowledge_file_ids: ['k1', 'k2'],
     profile_id: 'p_1',
+    knowledge_strategy: 'existing_only',
     timeout_seconds: 180,
   });
   const okEnvelope = parseEnvelope(okResult);
   assert(okEnvelope.ok, 'valid submit should succeed');
 
-  assert(calls.length >= 1, 'valid submit should call downstream API');
-  assert(calls.length === 1, 'valid submit should call downstream API once');
-  assert(calls[0].path === '/jobs', 'submit job should call /jobs');
+  assert(postCalls.length >= 1, 'valid submit should call downstream API');
+  assert(postCalls.length === 1, 'valid submit should call downstream API once');
+  assert(postCalls[0].path === '/jobs', 'submit job should call /jobs');
 
-  const requestBody = calls[0].body as Record<string, unknown>;
+  const requestBody = postCalls[0].body as Record<string, unknown>;
   assert(
     (requestBody.source as Record<string, unknown>).type === 'file_id',
     'submit body should set source.type=file_id',
@@ -134,6 +160,55 @@ async function testSubmitJobValidation(): Promise<void> {
   assert(
     (requestBody.knowledge as Record<string, unknown>).profile_id === 'p_1',
     'submit body should include profile_id',
+  );
+  assert(
+    (requestBody.knowledge as Record<string, unknown>).strategy === 'existing_only',
+    'submit body should include knowledge.strategy',
+  );
+
+  const temporaryResult = await tool.execute('4', {
+    file_id: 'f_2',
+    mode: 'confirm_required',
+    knowledge_file_ids: ['k_temp_1'],
+    profile_id: 'p_should_be_dropped',
+    knowledge_strategy: 'temporary_only',
+  });
+  const temporaryEnvelope = parseEnvelope(temporaryResult);
+  assert(temporaryEnvelope.ok, 'temporary-only submit should succeed');
+  const temporaryCall = postCalls[1];
+  assert(temporaryCall !== undefined, 'temporary submit should add a second downstream call');
+  const temporaryRequestBody = temporaryCall.body as Record<string, unknown>;
+  assert(
+    (temporaryRequestBody.knowledge as Record<string, unknown>).strategy === 'temporary_only',
+    'temporary-only submit should forward temporary_only strategy',
+  );
+  assert(
+    (temporaryRequestBody.knowledge as Record<string, unknown>).profile_id === undefined,
+    'temporary-only submit should omit profile_id',
+  );
+}
+
+async function testListKnowledgeFilesQueryMapping(): Promise<void> {
+  const { client, getCalls } = createMockClient();
+  const tool = createListKnowledgeFilesTool(client);
+
+  const result = await tool.execute('list-1', {
+    knowledge_file_ids: ['k_temp_1', 'k_temp_2'],
+    source_scope: 'temporary',
+    page: 2,
+    page_size: 5,
+  });
+  const envelope = parseEnvelope(result);
+  assert(envelope.ok, 'list knowledge files should succeed');
+  assert(getCalls.length === 1, 'list knowledge files should call downstream API once');
+  assert(getCalls[0].path === '/knowledge-files', 'list tool should call /knowledge-files');
+  assert(
+    getCalls[0].query?.knowledge_file_ids === 'k_temp_1,k_temp_2',
+    'knowledge_file_ids should be joined into a comma-separated query string',
+  );
+  assert(
+    getCalls[0].query?.source_scope === 'temporary',
+    'source_scope should be forwarded to the backend',
   );
 }
 
@@ -147,6 +222,7 @@ async function run(): Promise<void> {
   testErrorMapping();
   testConfigParsing();
   await testSubmitJobValidation();
+  await testListKnowledgeFilesQueryMapping();
   testValidationErrorFactory();
 
   // Keep output simple and CI-friendly.

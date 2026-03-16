@@ -1,6 +1,8 @@
 import { validationError } from '../shared/errors';
 import { type SnapFillClient, type ToolDefinition, toToolResult } from '../shared/types';
 
+const KNOWLEDGE_STRATEGIES = ['auto', 'existing_only', 'temporary_only'] as const;
+
 function normalizeKnowledgeFileIds(input: unknown): string[] | null {
   if (!Array.isArray(input) || input.length === 0) {
     return null;
@@ -40,6 +42,11 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
         profile_id: {
           type: 'string',
         },
+        knowledge_strategy: {
+          type: 'string',
+          enum: [...KNOWLEDGE_STRATEGIES],
+          default: 'auto',
+        },
         timeout_seconds: {
           type: 'integer',
           minimum: 30,
@@ -64,6 +71,14 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
         return toToolResult(validationError('knowledge_file_ids must be a non-empty string array'));
       }
 
+      const knowledgeStrategy =
+        typeof params.knowledge_strategy === 'string' ? params.knowledge_strategy.trim() : 'auto';
+      if (!KNOWLEDGE_STRATEGIES.includes(knowledgeStrategy as (typeof KNOWLEDGE_STRATEGIES)[number])) {
+        return toToolResult(
+          validationError('knowledge_strategy must be one of auto, existing_only, temporary_only'),
+        );
+      }
+
       const profileId =
         typeof params.profile_id === 'string' && params.profile_id.trim().length > 0
           ? params.profile_id.trim()
@@ -78,7 +93,8 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
         },
         knowledge: {
           knowledge_file_ids: knowledgeFileIds,
-          profile_id: profileId,
+          profile_id: knowledgeStrategy === 'temporary_only' ? undefined : profileId,
+          strategy: knowledgeStrategy,
         },
         mode,
         timeout_seconds: timeoutSeconds,

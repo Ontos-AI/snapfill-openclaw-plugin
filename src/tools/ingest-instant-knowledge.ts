@@ -35,7 +35,7 @@ export function createIngestInstantKnowledgeTool(client: SnapFillClient): ToolDe
   return {
     name: 'snapfill_ingest_instant_knowledge',
     description:
-      'Ingest structured text entries as instant knowledge files when no usable knowledge base is available.',
+      'Ingest structured text entries as instant knowledge files for the current task, including temporary-only form filling flows.',
     parameters: {
       type: 'object',
       properties: {

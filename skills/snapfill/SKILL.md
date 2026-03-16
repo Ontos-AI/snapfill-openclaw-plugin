@@ -31,23 +31,68 @@ Activate when the user's intent involves filling out a form or document, includi
 
 Always follow this order. Do not skip required user confirmation.
 
-1. `snapfill_list_knowledge_files`
-2. Optional: `snapfill_list_profiles`
-3. If no usable knowledge file: `snapfill_ingest_instant_knowledge`
-4. `snapfill_submit_job`
-5. Immediately send a short acknowledgement (for example: "✅ Job submitted. Starting analysis now...")
-6. Poll `snapfill_get_job_status` until `status = "fillchart_ready"` — report progress after every poll (see Polling Behavior)
-7. Present all field suggestions to user and collect confirmation or edits (see Field Confirmation Rule)
-8. `snapfill_finalize_job`
-9. Poll `snapfill_get_job_status` until `status = "succeeded"` — report progress after every poll (see Polling Behavior)
-10. `snapfill_get_job_result` — deliver result to user (see Result Delivery)
+1. Decide the knowledge strategy for this task (see Knowledge Strategy Decision Rule)
+2. `snapfill_list_knowledge_files`
+3. Optional: `snapfill_list_profiles`
+4. If the chosen strategy requires temporary knowledge: `snapfill_ingest_instant_knowledge`
+5. Poll `snapfill_list_knowledge_files` for the returned `knowledge_file_ids` until they become usable
+6. `snapfill_submit_job`
+7. Immediately send a short acknowledgement (for example: "✅ Job submitted. Starting analysis now...")
+8. Poll `snapfill_get_job_status` until `status = "fillchart_ready"` — report progress after every poll (see Polling Behavior)
+9. Present all field suggestions to user and collect confirmation or edits (see Field Confirmation Rule)
+10. `snapfill_finalize_job`
+11. Poll `snapfill_get_job_status` until `status = "succeeded"` — report progress after every poll (see Polling Behavior)
+12. `snapfill_get_job_result` — deliver result to user (see Result Delivery)
 
-## Knowledge Source Fallback
+## Knowledge Strategy Decision Rule
 
-- If `snapfill_list_knowledge_files` returns any file with `status=success` or `status=complete`, use those IDs.
-- If none are usable, extract structured user background from current conversation/history and call `snapfill_ingest_instant_knowledge`.
-- Wait until the returned knowledge file IDs become usable, then continue.
-- If still unavailable, ask the user to upload or provide background information and stop.
+Choose exactly one strategy before submitting the job:
+
+1. `temporary_only`
+   Use this when the user explicitly wants this form filled from the current conversation or from a temporary persona, for example:
+   - "根据你对鲁迅的了解来填"
+   - "按我刚才说的人设填"
+   - "这次不要用我账号里的资料"
+   - "用我们现在对话里说的内容填"
+
+2. `existing_only`
+   Use this when the user explicitly wants their account knowledge/profile only, for example:
+   - "用我账号里的资料填"
+   - "按我的默认资料填"
+   - "用我知识库里现有内容"
+
+3. `auto`
+   Use this for all other cases.
+
+Never mix temporary knowledge files and persistent knowledge files in the same job.
+
+## Knowledge Source Workflow
+
+### `temporary_only`
+
+- Extract structured temporary background from the current conversation.
+- If the user asks for a public figure, fictional character, or temporary persona, you may summarize stable model knowledge into a temporary background entry.
+- Call `snapfill_ingest_instant_knowledge` with `persist=false`.
+- Poll `snapfill_list_knowledge_files` using the returned `knowledge_file_ids` and `source_scope="temporary"` until every file is `success` or `complete`.
+- Submit the job with:
+  - `knowledge_file_ids` = only the temporary knowledge IDs from this turn
+  - `knowledge_strategy` = `temporary_only`
+- Do not use `profile_id`.
+- Do not include any existing account knowledge file IDs.
+
+### `existing_only`
+
+- Call `snapfill_list_knowledge_files` with `source_scope="persistent"`.
+- If usable persistent knowledge files exist, submit the job with only those IDs and `knowledge_strategy="existing_only"`.
+- If no usable persistent knowledge exists, tell the user and stop. Do not silently switch to temporary knowledge.
+
+### `auto`
+
+- Call `snapfill_list_knowledge_files` with `source_scope="persistent"`.
+- If usable persistent knowledge files exist, submit the job with only those IDs and `knowledge_strategy="auto"`.
+- If none are usable, extract temporary background from the current conversation and call `snapfill_ingest_instant_knowledge` with `persist=false`.
+- Poll those temporary IDs with `source_scope="temporary"` until usable.
+- Submit the job with only those temporary IDs and `knowledge_strategy="auto"`.
 
 ## Resuming a Previous Job
 
@@ -55,9 +100,9 @@ If the user provides a `job_id` or asks about a form they previously submitted:
 
 1. Call `snapfill_get_job_status` with the provided `job_id`.
 2. Based on the returned status, continue from the appropriate step:
-   - `fillchart_ready` → go to Field Confirmation Rule (Step 7)
-   - `succeeded` → call `snapfill_get_job_result` and deliver the result (Step 10)
-   - `doc_fill_running` or `fillchart_running` → resume polling (Step 6 or 9)
+   - `fillchart_ready` → go to Field Confirmation Rule (Step 9)
+   - `succeeded` → call `snapfill_get_job_result` and deliver the result (Step 12)
+   - `doc_fill_running` or `fillchart_running` → resume polling (Step 8 or 11)
    - `failed` / `timeout` → inform the user with the error and suggest resubmitting
    - `cancelled` → inform the user and offer to start a new job
 
@@ -170,7 +215,11 @@ Use user-facing messages from tool error envelope (`error.user_message`).
 
 Special handling:
 
-- `KNOWLEDGE_SOURCE_REQUIRED`: ask for profile/background docs or allow memory extraction.
+- `KNOWLEDGE_SOURCE_REQUIRED`: ask for profile/background docs or allow temporary knowledge extraction.
+- `EXISTING_KNOWLEDGE_REQUIRED`: tell the user no usable account knowledge is available for this request.
+- `TEMPORARY_KNOWLEDGE_REQUIRED`: extract temporary background from the current conversation, then retry.
+- `KNOWLEDGE_STRATEGY_MISMATCH`: explain that the request mixed account knowledge and temporary knowledge in one task, then correct the strategy before retrying.
+- `FORM_DATA_FIELD_MISMATCH`: re-display the full field list and ensure future edits use the exact field keys shown in the list.
 - `TASK_TIMEOUT`: provide `job_id` and suggest retry later.
 - `JOB_STATUS_CONFLICT`: tell user to wait for the next stage.
 

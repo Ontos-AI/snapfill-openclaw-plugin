@@ -3,11 +3,19 @@ import type { ToolEnvelope, ToolError } from './types';
 const USER_MESSAGE_BY_CODE: Record<string, string> = {
   KNOWLEDGE_SOURCE_REQUIRED:
     '未找到可用知识库。请上传资料，或允许我从历史对话中提取背景信息后重试。',
+  EXISTING_KNOWLEDGE_REQUIRED:
+    '当前没有可用的账号常驻资料。请先上传知识库文件，或改为使用本轮临时资料模式。',
+  TEMPORARY_KNOWLEDGE_REQUIRED:
+    '当前任务需要本轮临时资料。请先让我根据当前对话整理临时背景信息后重试。',
+  KNOWLEDGE_STRATEGY_MISMATCH:
+    '本次任务的知识来源和要求不一致。请明确是使用账号资料，还是只使用本轮临时资料。',
   PDF_OCR_NOT_SUPPORTED: '当前 PDF 为扫描版，无法提取文本。请上传可检索文本 PDF。',
   INSUFFICIENT_CREDITS: '账户点墨不足，请充值后重试。',
   TASK_TIMEOUT: '任务处理超时，请稍后重试。如持续失败，请提供任务 ID 联系支持。',
   FILE_NOT_FOUND: '文件不存在或已失效，请重新上传。',
   JOB_STATUS_CONFLICT: '当前任务状态不支持此操作，请等待任务进入下一阶段。',
+  FORM_DATA_FIELD_MISMATCH:
+    '当前提交的字段名没有匹配到表格字段。我会重新展示表格字段，并按原始字段名重新确认。',
 };
 
 const FALLBACK_USER_MESSAGE = '操作失败，请稍后重试。如问题持续，请联系支持。';
