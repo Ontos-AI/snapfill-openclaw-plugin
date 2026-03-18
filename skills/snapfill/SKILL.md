@@ -4,7 +4,7 @@ description: Use SnapFill to fill in PDF, Word, or Excel forms whenever the user
 metadata:
   openclaw:
     requires:
-      config: ["plugins.entries.snapfill.config.apiKey", "plugins.entries.snapfill.config.baseUrl"]
+      config: ["plugins.entries.snapfill.config.apiKey"]
 ---
 
 # SnapFill Form Filling

@@ -27,7 +27,6 @@ Tool list:
 ## Prerequisites
 
 - A running OpenClaw instance with plugin support
-- Reachable SnapFill backend URL
 - Valid SnapFill API key (`sfk_...`)
 
 ## Install
@@ -61,7 +60,6 @@ Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
       "snapfill": {
         "enabled": true,
         "config": {
-          "baseUrl": "https://api.gosnapfill.com/v1/fill-jobs",
           "apiKey": "sfk_xxx",
           "timeoutSeconds": 300,
           "pollIntervalMs": 1000,
@@ -117,8 +115,6 @@ OpenClaw precedence still applies:
 
 ## Troubleshooting
 
-- `config.baseUrl is required`
-  - Ensure `plugins.entries.snapfill.config.baseUrl` is set.
 - `config.apiKey is required`
   - Ensure `plugins.entries.snapfill.config.apiKey` is set and non-empty.
 - `KNOWLEDGE_SOURCE_REQUIRED`

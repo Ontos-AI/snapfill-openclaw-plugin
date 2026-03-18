@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2026-03-18
+
+### Changed
+
+- Hardcoded the SnapFill service base URL inside the plugin instead of exposing it through user config.
+- Removed `baseUrl` from the published config schema, bundled skill metadata, tests, and README examples.
+- Unified the npm package version and plugin manifest version at `0.1.5`.
+
 ## [0.1.2] - 2026-03-11
 
 ### Added

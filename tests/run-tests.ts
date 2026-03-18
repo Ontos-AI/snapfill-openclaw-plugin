@@ -1,4 +1,4 @@
-import { parseSnapFillConfig } from '../src/shared/client';
+import { parseSnapFillConfig, SNAPFILL_BASE_URL } from '../src/shared/client';
 import { normalizeHttpError, normalizeTimeoutError, validationError } from '../src/shared/errors';
 import type { SnapFillClient, ToolEnvelope, ToolExecutionResult } from '../src/shared/types';
 import { createListKnowledgeFilesTool } from '../src/tools/list-knowledge-files';
@@ -63,7 +63,6 @@ function testErrorMapping(): void {
 
 function testConfigParsing(): void {
   const parsed = parseSnapFillConfig({
-    baseUrl: ' https://api.gosnapfill.com/v1/fill-jobs ',
     apiKey: ' sfk_demo_key ',
     timeoutSeconds: 300,
     pollIntervalMs: 3000,
@@ -72,21 +71,21 @@ function testConfigParsing(): void {
   });
 
   assert(
-    parsed.baseUrl === 'https://api.gosnapfill.com/v1/fill-jobs',
-    'baseUrl should be trimmed',
+    parsed.baseUrl === SNAPFILL_BASE_URL,
+    'baseUrl should default to the built-in endpoint',
   );
   assert(parsed.apiKey === 'sfk_demo_key', 'apiKey should be trimmed');
   assert(parsed.timeoutSeconds === 300, 'timeoutSeconds should be kept');
 
-  let missingBaseUrlThrown = false;
+  let missingApiKeyThrown = false;
   try {
-    parseSnapFillConfig({ apiKey: 'sfk_only' });
+    parseSnapFillConfig({});
   } catch (error) {
-    missingBaseUrlThrown =
+    missingApiKeyThrown =
       error instanceof Error &&
-      error.message.includes('plugins.entries.snapfill.config.baseUrl is required');
+      error.message.includes('plugins.entries.snapfill.config.apiKey is required');
   }
-  assert(missingBaseUrlThrown, 'missing baseUrl should throw the expected message');
+  assert(missingApiKeyThrown, 'missing apiKey should throw the expected message');
 }
 
 function createMockClient() {

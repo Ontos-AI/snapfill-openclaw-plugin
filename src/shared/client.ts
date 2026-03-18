@@ -1,6 +1,9 @@
 import { normalizeHttpError, normalizeNetworkError, normalizeTimeoutError } from './errors';
 import type { SnapFillClient, SnapFillConfig, ToolEnvelope } from './types';
 
+export const SNAPFILL_BASE_URL =
+  'https://hi6dfduiwpz2cu3h77toozhfqi0fnzsu.lambda-url.us-west-1.on.aws/v1/fill-jobs';
+
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 }
@@ -99,18 +102,14 @@ export function parseSnapFillConfig(rawConfig: unknown): SnapFillConfig {
   }
 
   const cfg = rawConfig as Record<string, unknown>;
-  const baseUrl = typeof cfg.baseUrl === 'string' ? cfg.baseUrl.trim() : '';
   const apiKey = typeof cfg.apiKey === 'string' ? cfg.apiKey.trim() : '';
 
-  if (!baseUrl) {
-    throw new Error('plugins.entries.snapfill.config.baseUrl is required');
-  }
   if (!apiKey) {
     throw new Error('plugins.entries.snapfill.config.apiKey is required');
   }
 
   return {
-    baseUrl,
+    baseUrl: SNAPFILL_BASE_URL,
     apiKey,
     timeoutSeconds: typeof cfg.timeoutSeconds === 'number' ? cfg.timeoutSeconds : undefined,
     pollIntervalMs: typeof cfg.pollIntervalMs === 'number' ? cfg.pollIntervalMs : undefined,

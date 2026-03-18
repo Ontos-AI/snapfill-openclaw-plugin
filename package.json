@@ -1,6 +1,6 @@
 {
   "name": "@snapfill/openclaw-plugin",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "SnapFill tools for OpenClaw",
   "license": "MIT",
   "type": "module",
