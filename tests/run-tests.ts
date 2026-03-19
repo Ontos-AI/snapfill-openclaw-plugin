@@ -255,6 +255,18 @@ function testPluginManifestAndSkillGuardrails(): void {
     'skill should require OCR-derived image content to flow through SnapFill instead of direct manual filling',
   );
   assert(
+    skillContent.includes('If a SnapFill job reaches `fillchart_ready` but `field_suggestions` is empty:'),
+    'skill should define explicit handling for zero-field analysis results',
+  );
+  assert(
+    skillContent.includes('Do not claim a specific root cause such as "ordinary Word tables are unsupported"'),
+    'skill should forbid over-diagnosing the cause of a zero-field result without backend evidence',
+  );
+  assert(
+    skillContent.includes('If `field_suggestions` is empty, follow the Zero-Field Result Rule, stop, and wait for the user instead of calling `snapfill_finalize_job`.'),
+    'skill should block finalize when fillchart_ready returns no fields',
+  );
+  assert(
     skillContent.includes('Do not proactively switch to manual workarounds such as converting to PDF, simplifying the file, using `python-docx`, or filling the document outside SnapFill while the job is still in an in-progress status.'),
     'skill should forbid proactive manual fallback while a SnapFill job is still in progress',
   );

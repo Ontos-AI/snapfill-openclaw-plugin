@@ -195,6 +195,17 @@ conversation — regardless of when in the conversation the instruction was give
 If the user's instruction is ambiguous (e.g., "use my usual info"), ask for clarification
 before applying any value. Do not silently fall back to the knowledge base.
 
+## Zero-Field Result Rule
+
+If a SnapFill job reaches `fillchart_ready` but `field_suggestions` is empty:
+
+- State only the observed fact: SnapFill completed field analysis for this job but returned 0 fields.
+- Include the `job_id` when reporting this outcome.
+- Do not claim a specific root cause such as "ordinary Word tables are unsupported", "this template type cannot work", or "SnapFill only supports form-field documents" unless a SnapFill tool explicitly returns that diagnosis.
+- Treat the cause as unknown unless the backend provides a structured error or a clear diagnostic message.
+- If the user asks what to do next, you may offer retrying with SnapFill, checking another copy of the file, or discussing a workaround, but present those as options rather than confirmed root-cause fixes.
+- Do not present a non-SnapFill fallback as the default conclusion from a zero-field result alone.
+
 ## Field Confirmation Rule — HARD BLOCK
 
 **This is a hard requirement. `snapfill_finalize_job` MUST NOT be called under any
@@ -206,7 +217,8 @@ When job status reaches `fillchart_ready`:
 
 1. Read `field_suggestions` from the tool output. Apply the Value Priority Rule above to
    override any suggested values with what the user has already stated in this conversation.
-2. Present **all** fields as a numbered list with their resolved values:
+2. If `field_suggestions` is empty, follow the Zero-Field Result Rule, stop, and wait for the user instead of calling `snapfill_finalize_job`.
+3. Present **all** fields as a numbered list with their resolved values:
    ```
    Here are the fields I'll fill in. Please review and let me know if anything needs to change:
 
@@ -217,14 +229,14 @@ When job status reaches `fillchart_ready`:
 
    Does everything look correct? If you'd like to change any field, tell me the number and the new value.
    ```
-3. **Stop and wait.** Do not proceed. Do not call `snapfill_finalize_job`. Wait for the
+4. **Stop and wait.** Do not proceed. Do not call `snapfill_finalize_job`. Wait for the
    user's reply in this conversation.
-4. If the user requests changes:
+5. If the user requests changes:
    - Apply all changes to a local field snapshot.
    - Re-display the **complete updated list** (not just the changed items).
    - Ask for confirmation again.
    - Repeat until the user explicitly confirms.
-5. Only call `snapfill_finalize_job` after the user sends an explicit confirmation
+6. Only call `snapfill_finalize_job` after the user sends an explicit confirmation
    (e.g., "yes", "looks good", "submit", "confirm", "go ahead", "okay").
 
 **Do not interpret silence, a prior instruction, or a general "fill the form" request as
