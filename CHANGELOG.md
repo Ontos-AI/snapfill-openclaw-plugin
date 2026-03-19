@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2026-03-19
+
+### Changed
+
+- Tightened the bundled SnapFill skill orchestration so the plugin stays on the intended SnapFill flow.
+- Added support for temporary image-to-text knowledge handling inside the bundled skill.
+
+### Fixed
+
+- Ensured the OpenClaw plugin metadata loads correctly with the bundled skill registration.
+- Prevented over-diagnosing zero-field SnapFill results.
+- Restricted image knowledge continuation to OCR-derived content so the SnapFill flow remains consistent.
+
 ## [0.1.5] - 2026-03-18
 
 ### Changed
