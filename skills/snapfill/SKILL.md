@@ -18,6 +18,7 @@ Activate when the user's intent involves filling out a form or document, includi
 - Outcome-based requests: "I need a ready-to-submit version of this", "get me the completed form", "帮我完成这个表", "把这个表处理好"
 - Sending a form to be filled: "I'll send you a form", "here's the form, please fill it", "I'm sending you a document to fill out"
 - Mentioning reference documents + a form: "I'll send a reference doc first, then the form", "use this document to fill the form"
+- A form file plus any supporting attachments in the same request, where the extra files are meant to provide background for filling the form, such as resumes, profile documents, screenshots, IDs, certificates, offer letters, contracts, reference images, notes, or other user-provided materials
 - Explicit plugin mention: "use SnapFill for this", "run SnapFill on this file"
 - Resuming a previous job: "what's the status of my form?", "my job ID is job_xxx, is it done?", "can I download my form now?" (see Resuming a Previous Job)
 
@@ -26,6 +27,8 @@ Activate when the user's intent involves filling out a form or document, includi
 - "read this PDF for me" → pure reading, no filling needed
 
 **Critical rule: never manually extract data and write it yourself.** If the user's intent is to fill a form — even if phrased indirectly — always use the SnapFill tools. Do not produce a `.txt` summary or manually constructed file as a substitute.
+
+If the `snapfill_*` tools are unavailable or the plugin is not loaded, tell the user SnapFill is unavailable in the current environment and stop. Do not switch to `python-docx`, ad hoc Python scripts, `curl`, or direct HTTP calls as a substitute for the SnapFill workflow.
 
 ## Required Tool Order
 
@@ -71,6 +74,7 @@ Never mix temporary knowledge files and persistent knowledge files in the same j
 ### `temporary_only`
 
 - Extract structured temporary background from the current conversation.
+- If the user provides supporting images and those images are meant to supply background for the form, first read the visible image content and extract the relevant text or structured facts into temporary background text.
 - If the user asks for a public figure, fictional character, or temporary persona, you may summarize stable model knowledge into a temporary background entry.
 - Call `snapfill_ingest_instant_knowledge` with `persist=false`.
 - Poll `snapfill_list_knowledge_files` using the returned `knowledge_file_ids` and `source_scope="temporary"` until every file is `success` or `complete`.
@@ -90,9 +94,21 @@ Never mix temporary knowledge files and persistent knowledge files in the same j
 
 - Call `snapfill_list_knowledge_files` with `source_scope="persistent"`.
 - If usable persistent knowledge files exist, submit the job with only those IDs and `knowledge_strategy="auto"`.
-- If none are usable, extract temporary background from the current conversation and call `snapfill_ingest_instant_knowledge` with `persist=false`.
+- If none are usable, extract temporary background from the current conversation. If the user supplied supporting images, first extract the visible image text or structured facts from those images and include that content in the temporary background text. Then call `snapfill_ingest_instant_knowledge` with `persist=false`.
 - Poll those temporary IDs with `source_scope="temporary"` until usable.
 - Submit the job with only those temporary IDs and `knowledge_strategy="auto"`.
+
+## Image-Based Supporting Materials
+
+Use this section when the user supplies an image as background material for filling a form and SnapFill does not support that image as a direct knowledge file.
+
+- Treat the image as source material for temporary knowledge preparation, not as a reason to bypass SnapFill.
+- Extract only information that is actually visible in the image, such as names, dates, addresses, ID numbers, company names, school names, contact details, titles, or other readable fields.
+- Convert the extracted image information into concise structured text entries, then call `snapfill_ingest_instant_knowledge` and continue the normal SnapFill workflow.
+- If multiple images are provided, merge their usable facts into the same temporary knowledge set when they describe the same person or document package.
+- If an image is blurry, cropped, obstructed, or unreadable, tell the user exactly which parts could not be read and ask for a clearer image or typed text.
+- Do not invent unreadable values. Unknown fields should remain missing and be handled later during field confirmation.
+- Even when the image contains all needed information, do not fill the final document directly from OCR output. The OCR-derived text must still go through SnapFill and the `confirm_required` review step.
 
 ## Resuming a Previous Job
 
@@ -134,6 +150,29 @@ On stage transitions, send a clear notice:
 - When entering `succeeded`: "✅ Document ready!"
 
 If the same `progress` value appears in 3 or more consecutive polls, send once: "Still processing, please hang on..." — then keep polling with a short heartbeat update every 2 polls (for example: "Still working... no change yet") until progress changes.
+
+## Long-Running Job Rule
+
+Do not infer failure just because progress stays at the same percentage for a long time.
+
+- If `status` is still `fillchart_running` or `doc_fill_running`, treat the job as still in progress even if the percentage has not changed for several minutes.
+- In that case, tell the user the job is still running, include the `job_id`, and offer to keep checking later or resume from that `job_id`.
+- Do not claim the API is broken, the template is unsupported, or the document format must be changed unless a SnapFill tool actually returns a structured failure or the job status becomes `failed` or `timeout`.
+- Do not proactively switch to manual workarounds such as converting to PDF, simplifying the file, using `python-docx`, or filling the document outside SnapFill while the job is still in an in-progress status.
+- If the user explicitly asks for fallback options before the job reaches a terminal state, you may describe them as optional alternatives, but you must clearly say the current SnapFill job is still running and has not yet failed.
+- If the polling window configured by OpenClaw ends before the backend job reaches a terminal state, stop with a neutral status update and preserve the `job_id` for resume.
+
+Once the job reaches a terminal failure state such as `failed` or `timeout`, or if a SnapFill tool returns a structured error that blocks progress, you may offer next-step alternatives such as retrying with SnapFill, changing document format, or using a non-SnapFill fallback if the user wants that tradeoff.
+
+Recommended message shape when polling stops but the backend job is still running:
+
+```text
+SnapFill is still processing this form.
+Job ID: <job_id>
+
+It has not reached a final state yet, so I am not switching to any manual workaround.
+You can ask me to check this job again later with the same job ID.
+```
 
 ## Value Priority Rule
 
@@ -220,7 +259,7 @@ Special handling:
 - `TEMPORARY_KNOWLEDGE_REQUIRED`: extract temporary background from the current conversation, then retry.
 - `KNOWLEDGE_STRATEGY_MISMATCH`: explain that the request mixed account knowledge and temporary knowledge in one task, then correct the strategy before retrying.
 - `FORM_DATA_FIELD_MISMATCH`: re-display the full field list and ensure future edits use the exact field keys shown in the list.
-- `TASK_TIMEOUT`: provide `job_id` and suggest retry later.
+- `TASK_TIMEOUT`: provide `job_id`, explain that SnapFill timed out, and suggest retrying or resuming later through SnapFill. Do not switch to manual document editing as a substitute.
 - `JOB_STATUS_CONFLICT`: tell user to wait for the next stage.
 
 ## Output Style

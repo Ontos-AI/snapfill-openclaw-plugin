@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { parseSnapFillConfig, SNAPFILL_BASE_URL } from '../src/shared/client';
 import { normalizeHttpError, normalizeTimeoutError, validationError } from '../src/shared/errors';
 import type { SnapFillClient, ToolEnvelope, ToolExecutionResult } from '../src/shared/types';
@@ -217,12 +219,62 @@ function testValidationErrorFactory(): void {
   assert(err.error.code === 'VALIDATION_ERROR', 'validationError code should be VALIDATION_ERROR');
 }
 
+function testPluginManifestAndSkillGuardrails(): void {
+  const projectRoot = path.resolve(__dirname, '..', '..');
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, 'openclaw.plugin.json'), 'utf8'),
+  ) as Record<string, unknown>;
+
+  assert(manifest.entry === './src/index.ts', 'plugin manifest should declare the entry module');
+
+  const skills = Array.isArray(manifest.skills) ? manifest.skills : [];
+  assert(skills.includes('./skills/snapfill'), 'plugin manifest should bundle the snapfill skill');
+
+  const skillContent = fs.readFileSync(
+    path.join(projectRoot, 'skills', 'snapfill', 'SKILL.md'),
+    'utf8',
+  );
+  assert(
+    skillContent.includes('Do not switch to `python-docx`'),
+    'skill should forbid falling back to manual python-docx editing when SnapFill is unavailable',
+  );
+  assert(
+    skillContent.includes('Do not infer failure just because progress stays at the same percentage for a long time.'),
+    'skill should treat long-running in-progress jobs as still running instead of assuming failure',
+  );
+  assert(
+    skillContent.includes('plus any supporting attachments in the same request'),
+    'skill should generalize triggering beyond resume-specific supporting files',
+  );
+  assert(
+    skillContent.includes('If the user provides supporting images and those images are meant to supply background for the form, first read the visible image content and extract the relevant text or structured facts into temporary background text.'),
+    'skill should support converting image-based supporting materials into temporary text knowledge',
+  );
+  assert(
+    skillContent.includes('Even when the image contains all needed information, do not fill the final document directly from OCR output. The OCR-derived text must still go through SnapFill and the `confirm_required` review step.'),
+    'skill should require OCR-derived image content to flow through SnapFill instead of direct manual filling',
+  );
+  assert(
+    skillContent.includes('Do not proactively switch to manual workarounds such as converting to PDF, simplifying the file, using `python-docx`, or filling the document outside SnapFill while the job is still in an in-progress status.'),
+    'skill should forbid proactive manual fallback while a SnapFill job is still in progress',
+  );
+  assert(
+    skillContent.includes('If the user explicitly asks for fallback options before the job reaches a terminal state, you may describe them as optional alternatives'),
+    'skill should allow discussing fallbacks when the user explicitly asks, without treating the running job as failed',
+  );
+  assert(
+    skillContent.includes('Once the job reaches a terminal failure state such as `failed` or `timeout`'),
+    'skill should allow alternatives after a real terminal failure',
+  );
+}
+
 async function run(): Promise<void> {
   testErrorMapping();
   testConfigParsing();
   await testSubmitJobValidation();
   await testListKnowledgeFilesQueryMapping();
   testValidationErrorFactory();
+  testPluginManifestAndSkillGuardrails();
 
   // Keep output simple and CI-friendly.
   console.log('All tests passed.');
