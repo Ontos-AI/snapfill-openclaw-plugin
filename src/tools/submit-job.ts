@@ -47,12 +47,6 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
           enum: [...KNOWLEDGE_STRATEGIES],
           default: 'auto',
         },
-        timeout_seconds: {
-          type: 'integer',
-          minimum: 30,
-          maximum: 1800,
-          default: 300,
-        },
       },
       required: ['file_id', 'mode', 'knowledge_file_ids'],
     },
@@ -83,8 +77,6 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
         typeof params.profile_id === 'string' && params.profile_id.trim().length > 0
           ? params.profile_id.trim()
           : undefined;
-      const timeoutSeconds =
-        typeof params.timeout_seconds === 'number' ? params.timeout_seconds : undefined;
 
       const envelope = await client.post('/jobs', {
         source: {
@@ -97,7 +89,6 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
           strategy: knowledgeStrategy,
         },
         mode,
-        timeout_seconds: timeoutSeconds,
       });
 
       return toToolResult(envelope);

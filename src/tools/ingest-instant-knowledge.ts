@@ -51,7 +51,7 @@ export function createIngestInstantKnowledgeTool(client: SnapFillClient): ToolDe
             required: ['title', 'content'],
           },
         },
-        persist: { type: 'boolean', default: true },
+        persist: { type: 'boolean', default: false },
       },
       required: ['entries'],
     },
@@ -63,7 +63,7 @@ export function createIngestInstantKnowledgeTool(client: SnapFillClient): ToolDe
         );
       }
 
-      const persist = typeof params.persist === 'boolean' ? params.persist : true;
+      const persist = typeof params.persist === 'boolean' ? params.persist : false;
       const envelope = await client.post('/knowledge/instant', {
         entries,
         persist,
