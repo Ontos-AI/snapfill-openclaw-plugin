@@ -72,6 +72,8 @@ Configure `plugins.entries.snapfill-claw.config` in `~/.openclaw/openclaw.json`:
 }
 ```
 
+`apiKey` is recommended but no longer required at install time. You can install and enable the plugin first, then set the API key later.
+
 For more responsive progress updates, keep `pollIntervalMs` around `1000`. Lower values can increase API traffic.
 
 If the plugin is installed but `apiKey` is still empty, open https://www.gosnapfill.com/home/api-key to create or copy your API key first.

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-03-27
+
+### Fixed
+
+- Removed the manifest-level required `apiKey` constraint so OpenClaw can install and enable the plugin before the user configures credentials.
+
+### Changed
+
+- Bumped the npm package version and OpenClaw plugin manifest version to `0.2.1` for release publication.
+
 ## [0.2.0] - 2026-03-27
 
 ### Changed
