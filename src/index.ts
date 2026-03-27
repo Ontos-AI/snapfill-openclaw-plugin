@@ -15,6 +15,9 @@ function readPluginConfig(api: OpenClawApi): unknown {
   }
 
   return (
+    api.config.get('plugins.entries.snapfill-claw.config') ??
+    api.config.get('plugins.snapfill-claw.config') ??
+    api.config.get('snapfill-claw') ??
     api.config.get('plugins.entries.snapfill.config') ??
     api.config.get('plugins.snapfill.config') ??
     api.config.get('snapfill')
@@ -35,22 +38,25 @@ function createLazyClient(api: OpenClawApi): SnapFillClient {
   };
 }
 
-export default function register(api: OpenClawApi): void {
-  const client = createLazyClient(api);
+export default {
+  id: 'snapfill-claw',
+  name: 'SnapFill Plugin',
+  register(api: OpenClawApi): void {
+    const client = createLazyClient(api);
 
-  const tools = [
-    createPrepareFileTool(client),
-    createListKnowledgeFilesTool(client),
-    createListProfilesTool(client),
-    createIngestInstantKnowledgeTool(client),
-    createSubmitJobTool(client),
-    createGetJobStatusTool(client),
-    createFinalizeJobTool(client),
-    createGetJobResultTool(client),
-  ];
+    const tools = [
+      createPrepareFileTool(client),
+      createListKnowledgeFilesTool(client),
+      createListProfilesTool(client),
+      createIngestInstantKnowledgeTool(client),
+      createSubmitJobTool(client),
+      createGetJobStatusTool(client),
+      createFinalizeJobTool(client),
+      createGetJobResultTool(client),
+    ];
 
-  for (const tool of tools) {
-    api.registerTool(tool, { optional: true });
-  }
-}
-
+    for (const tool of tools) {
+      api.registerTool(tool, { optional: true });
+    }
+  },
+};

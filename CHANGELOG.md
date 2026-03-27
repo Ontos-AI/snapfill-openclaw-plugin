@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-27
+
+### Changed
+
+- Aligned the plugin id with the published npm package name to remove OpenClaw id mismatch warnings.
+- Updated runtime exports, CLI examples, and config guidance to use plugin id `snapfill-claw`.
+- Kept backward-compatible runtime fallback reads for older `snapfill` config keys during migration.
+- Bumped the npm package version and OpenClaw plugin manifest version to `0.2.0` for release publication.
+
+## [0.1.9] - 2026-03-27
+
+### Fixed
+
+- Updated npm installation and release documentation to use `@ontos-ai/snapfill-claw` instead of the old package name.
+
+### Changed
+
+- Bumped the npm package version and OpenClaw plugin manifest version to `0.1.9` for release publication.
+
 ## [0.1.8] - 2026-03-27
 
 ### Changed

@@ -5,7 +5,7 @@ export const SNAPFILL_BASE_URL =
   'https://ijnplnyv2ypeyquia4wjcrzx5q0fwdmn.lambda-url.us-west-1.on.aws/v1/fill-jobs';
 
 const API_KEY_HELP_MESSAGE =
-  'SnapFill API key is required. Get one at https://www.gosnapfill.com/home/api-key, then run openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..." and retry.';
+  'SnapFill API key is required. Get one at https://www.gosnapfill.com/home/api-key, then run openclaw config set plugins.entries.snapfill-claw.config.apiKey "sfk_..." and retry.';
 
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;

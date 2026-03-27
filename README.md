@@ -34,7 +34,7 @@ Tool list:
 ### Production (npm)
 
 ```bash
-openclaw plugins install @snapfill/openclaw-plugin
+openclaw plugins install @ontos-ai/snapfill-claw
 ```
 
 ### Local path (development)
@@ -46,18 +46,18 @@ openclaw plugins install /absolute/path/to/openclaw-plugin
 Then enable plugin explicitly (safe even if already enabled by default):
 
 ```bash
-openclaw plugins enable snapfill
+openclaw plugins enable snapfill-claw
 ```
 
 ## Configure
 
-Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
+Configure `plugins.entries.snapfill-claw.config` in `~/.openclaw/openclaw.json`:
 
 ```json
 {
   "plugins": {
     "entries": {
-      "snapfill": {
+      "snapfill-claw": {
         "enabled": true,
         "config": {
           "apiKey": "sfk_xxx",
@@ -76,17 +76,19 @@ For more responsive progress updates, keep `pollIntervalMs` around `1000`. Lower
 
 If the plugin is installed but `apiKey` is still empty, open https://www.gosnapfill.com/home/api-key to create or copy your API key first.
 
+If you are upgrading from older releases that used plugin id `snapfill`, move your config from `plugins.entries.snapfill` to `plugins.entries.snapfill-claw`. The runtime still reads the old config keys as a fallback, but OpenClaw CLI and config validation should now target `snapfill-claw`.
+
 ## Verify Installation
 
 ```bash
 openclaw plugins list
-openclaw plugins info snapfill
+openclaw plugins info snapfill-claw
 openclaw plugins doctor
 ```
 
 Expected result:
 
-- `snapfill` plugin is enabled
+- `snapfill-claw` plugin is enabled
 - config schema validation passes
 - `snapfill_*` tools are available in agent sessions
 
@@ -118,7 +120,7 @@ OpenClaw precedence still applies:
 ## Troubleshooting
 
 - `config.apiKey is required`
-  - Get your API key from https://www.gosnapfill.com/home/api-key, then set `plugins.entries.snapfill.config.apiKey`.
+  - Get your API key from https://www.gosnapfill.com/home/api-key, then set `plugins.entries.snapfill-claw.config.apiKey`.
 - `KNOWLEDGE_SOURCE_REQUIRED`
   - Upload knowledge files first, or allow instant knowledge ingestion from conversation history.
 - Plugin installs but tools are missing

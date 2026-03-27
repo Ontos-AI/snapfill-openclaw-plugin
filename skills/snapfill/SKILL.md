@@ -32,10 +32,10 @@ If the `snapfill_*` tools are unavailable or the plugin is not loaded, tell the 
 
 If a SnapFill tool fails because the API key is missing, stop immediately and give the user a direct setup instruction.
 
-- Clearly state that SnapFill cannot start because `plugins.entries.snapfill.config.apiKey` is not configured.
+- Clearly state that SnapFill cannot start because `plugins.entries.snapfill-claw.config.apiKey` is not configured.
 - Strongly direct the user to `https://www.gosnapfill.com/home/api-key` to create or copy an API key.
 - Tell the user to set it with:
-  - `openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..."`
+  - `openclaw config set plugins.entries.snapfill-claw.config.apiKey "sfk_..."`
 - After that, tell the user to retry the same fill request.
 - Do not continue with any fallback workflow until the API key is configured.
 

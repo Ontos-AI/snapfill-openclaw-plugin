@@ -95,7 +95,7 @@ function testConfigParsing(): void {
   } catch (error) {
     missingConfigThrown =
       error instanceof Error &&
-      error.message.includes('plugins.entries.snapfill.config.apiKey') &&
+      error.message.includes('plugins.entries.snapfill-claw.config.apiKey') &&
       error.message.includes('https://www.gosnapfill.com/home/api-key');
   }
   assert(missingConfigThrown, 'missing config should also guide users to the API key page');
@@ -235,8 +235,13 @@ function testPluginManifestAndSkillGuardrails(): void {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(projectRoot, 'openclaw.plugin.json'), 'utf8'),
   ) as Record<string, unknown>;
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
+  ) as Record<string, unknown>;
 
   assert(manifest.entry === './src/index.ts', 'plugin manifest should declare the entry module');
+  assert(manifest.id === 'snapfill-claw', 'plugin manifest should align plugin id with the npm package id');
+  assert(packageJson.name === '@ontos-ai/snapfill-claw', 'package name should use the published npm package id');
 
   const skills = Array.isArray(manifest.skills) ? manifest.skills : [];
   assert(skills.includes('./skills/snapfill'), 'plugin manifest should bundle the snapfill skill');
@@ -258,7 +263,7 @@ function testPluginManifestAndSkillGuardrails(): void {
     'skill should direct users to the API key page when apiKey is missing',
   );
   assert(
-    skillContent.includes('openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..."'),
+    skillContent.includes('openclaw config set plugins.entries.snapfill-claw.config.apiKey "sfk_..."'),
     'skill should include the direct OpenClaw config command for missing apiKey',
   );
   assert(

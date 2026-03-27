@@ -34,7 +34,7 @@ git push origin v0.1.0
 
 ## 3. npm Release Checklist
 
-- Ensure npm account can publish `@snapfill/openclaw-plugin`.
+- Ensure npm account can publish `@ontos-ai/snapfill-claw`.
 - Dry-run package contents:
 
 ```bash
@@ -61,12 +61,12 @@ npm publish --access public
 - Install from npm in a clean OpenClaw environment:
 
 ```bash
-openclaw plugins install @snapfill/openclaw-plugin
-openclaw plugins enable snapfill
-openclaw plugins info snapfill
+openclaw plugins install @ontos-ai/snapfill-claw
+openclaw plugins enable snapfill-claw
+openclaw plugins info snapfill-claw
 ```
 
-- Configure `plugins.entries.snapfill.config` and run a smoke flow:
+- Configure `plugins.entries.snapfill-claw.config` and run a smoke flow:
   - `snapfill_list_knowledge_files`
   - `snapfill_submit_job`
   - `snapfill_get_job_status`
