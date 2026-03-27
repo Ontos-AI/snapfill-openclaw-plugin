@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2026-03-27
+
+### Fixed
+
+- Fixed OpenClaw runtime config compatibility so the plugin can resolve `apiKey` from current plugin-scoped runtime config objects instead of relying on `api.config.get(...)` only.
+
+### Changed
+
+- Aligned the plugin entry packaging with the current OpenClaw plugin pattern by publishing the built `dist/index.js` artifact and exported declarations.
+- Updated the runtime-facing plugin types and tool registration flow to better match the current OpenClaw plugin SDK shape and the tested `knowhere-claw` integration pattern.
+- Bumped the npm package version and OpenClaw plugin manifest version to `0.2.2` for release publication.
+
 ## [0.2.1] - 2026-03-27
 
 ### Fixed
