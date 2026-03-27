@@ -51,9 +51,11 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
       required: ['file_id', 'mode', 'knowledge_file_ids'],
     },
     async execute(_id, params) {
-      const fileId = typeof params.file_id === 'string' ? params.file_id.trim() : '';
-      const mode = typeof params.mode === 'string' ? params.mode : '';
-      const knowledgeFileIds = normalizeKnowledgeFileIds(params.knowledge_file_ids);
+      const paramsRecord =
+        params && typeof params === 'object' ? (params as Record<string, unknown>) : {};
+      const fileId = typeof paramsRecord.file_id === 'string' ? paramsRecord.file_id.trim() : '';
+      const mode = typeof paramsRecord.mode === 'string' ? paramsRecord.mode : '';
+      const knowledgeFileIds = normalizeKnowledgeFileIds(paramsRecord.knowledge_file_ids);
 
       if (!fileId) {
         return toToolResult(validationError('file_id is required'));
@@ -66,7 +68,9 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
       }
 
       const knowledgeStrategy =
-        typeof params.knowledge_strategy === 'string' ? params.knowledge_strategy.trim() : 'auto';
+        typeof paramsRecord.knowledge_strategy === 'string'
+          ? paramsRecord.knowledge_strategy.trim()
+          : 'auto';
       if (!KNOWLEDGE_STRATEGIES.includes(knowledgeStrategy as (typeof KNOWLEDGE_STRATEGIES)[number])) {
         return toToolResult(
           validationError('knowledge_strategy must be one of auto, existing_only, temporary_only'),
@@ -74,8 +78,8 @@ export function createSubmitJobTool(client: SnapFillClient): ToolDefinition {
       }
 
       const profileId =
-        typeof params.profile_id === 'string' && params.profile_id.trim().length > 0
-          ? params.profile_id.trim()
+        typeof paramsRecord.profile_id === 'string' && paramsRecord.profile_id.trim().length > 0
+          ? paramsRecord.profile_id.trim()
           : undefined;
 
       const envelope = await client.post('/jobs', {

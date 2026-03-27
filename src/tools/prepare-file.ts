@@ -37,15 +37,18 @@ export function createPrepareFileTool(client: SnapFillClient): ToolDefinition {
       required: ['action'],
     },
     async execute(_id, params) {
-      const action = parseAction(params.action);
+      const paramsRecord =
+        params && typeof params === 'object' ? (params as Record<string, unknown>) : {};
+      const action = parseAction(paramsRecord.action);
       if (!action) {
         return toToolResult(validationError('action must be either prepare or confirm'));
       }
 
       if (action === 'prepare') {
-        const filename = typeof params.filename === 'string' ? params.filename.trim() : '';
+        const filename =
+          typeof paramsRecord.filename === 'string' ? paramsRecord.filename.trim() : '';
         const contentType =
-          typeof params.content_type === 'string' ? params.content_type.trim() : '';
+          typeof paramsRecord.content_type === 'string' ? paramsRecord.content_type.trim() : '';
 
         if (!filename) {
           return toToolResult(validationError('filename is required when action=prepare'));
@@ -61,7 +64,8 @@ export function createPrepareFileTool(client: SnapFillClient): ToolDefinition {
         return toToolResult(envelope);
       }
 
-      const uploadId = typeof params.upload_id === 'string' ? params.upload_id.trim() : '';
+      const uploadId =
+        typeof paramsRecord.upload_id === 'string' ? paramsRecord.upload_id.trim() : '';
       if (!uploadId) {
         return toToolResult(validationError('upload_id is required when action=confirm'));
       }

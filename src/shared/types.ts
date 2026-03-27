@@ -1,3 +1,5 @@
+import type { AnyAgentTool } from 'openclaw/plugin-sdk/core';
+
 export interface SnapFillConfig {
   baseUrl: string;
   apiKey: string;
@@ -22,21 +24,7 @@ export interface ToolExecutionResult {
   isError?: boolean;
 }
 
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-  execute: (id: string, params: Record<string, unknown>) => Promise<ToolExecutionResult>;
-}
-
-export interface OpenClawConfigAccessor {
-  get: (key: string) => unknown;
-}
-
-export interface OpenClawApi {
-  registerTool: (definition: ToolDefinition, options?: { optional?: boolean }) => void;
-  config?: OpenClawConfigAccessor;
-}
+export type ToolDefinition = AnyAgentTool;
 
 export interface SnapFillClient {
   get: <T>(path: string, query?: Record<string, unknown>) => Promise<ToolEnvelope<T>>;

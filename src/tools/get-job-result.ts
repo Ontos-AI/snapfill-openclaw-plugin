@@ -13,7 +13,9 @@ export function createGetJobResultTool(client: SnapFillClient): ToolDefinition {
       required: ['job_id'],
     },
     async execute(_id, params) {
-      const jobId = typeof params.job_id === 'string' ? params.job_id.trim() : '';
+      const paramsRecord =
+        params && typeof params === 'object' ? (params as Record<string, unknown>) : {};
+      const jobId = typeof paramsRecord.job_id === 'string' ? paramsRecord.job_id.trim() : '';
       if (!jobId) {
         return toToolResult(validationError('job_id is required'));
       }

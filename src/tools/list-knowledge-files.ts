@@ -48,26 +48,29 @@ export function createListKnowledgeFilesTool(client: SnapFillClient): ToolDefini
       },
     },
     async execute(_id, params) {
-      const knowledgeFileIds = normalizeKnowledgeFileIds(params.knowledge_file_ids);
-      if (params.knowledge_file_ids !== undefined && !knowledgeFileIds) {
+      const paramsRecord =
+        params && typeof params === 'object' ? (params as Record<string, unknown>) : {};
+      const knowledgeFileIds = normalizeKnowledgeFileIds(paramsRecord.knowledge_file_ids);
+      if (paramsRecord.knowledge_file_ids !== undefined && !knowledgeFileIds) {
         return toToolResult(
           validationError('knowledge_file_ids must be an array of non-empty strings'),
         );
       }
 
       let sourceScope: string | undefined;
-      if (params.source_scope !== undefined) {
+      if (paramsRecord.source_scope !== undefined) {
         if (
-          typeof params.source_scope !== 'string' ||
-          !SOURCE_SCOPES.includes(params.source_scope as (typeof SOURCE_SCOPES)[number])
+          typeof paramsRecord.source_scope !== 'string' ||
+          !SOURCE_SCOPES.includes(paramsRecord.source_scope as (typeof SOURCE_SCOPES)[number])
         ) {
           return toToolResult(validationError('source_scope must be one of all, temporary, persistent'));
         }
-        sourceScope = params.source_scope;
+        sourceScope = paramsRecord.source_scope;
       }
 
-      const page = typeof params.page === 'number' ? params.page : undefined;
-      const pageSize = typeof params.page_size === 'number' ? params.page_size : undefined;
+      const page = typeof paramsRecord.page === 'number' ? paramsRecord.page : undefined;
+      const pageSize =
+        typeof paramsRecord.page_size === 'number' ? paramsRecord.page_size : undefined;
       const envelope = await client.get<unknown[]>('/knowledge-files', {
         knowledge_file_ids: knowledgeFileIds?.join(','),
         source_scope: sourceScope,

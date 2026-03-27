@@ -2,6 +2,12 @@
 
 SnapFill plugin for OpenClaw. It registers `snapfill_*` tools and ships a default `snapfill` skill so users can complete form filling in one conversation flow.
 
+This package follows the current OpenClaw plugin packaging pattern:
+
+- plugin entry is the built artifact `dist/index.js`
+- package metadata exports the built plugin entry
+- runtime config resolution prefers the plugin-scoped runtime config object exposed by OpenClaw, with compatibility fallbacks for older getter-style runtimes
+
 ## Who This Is For
 
 - OpenClaw users who want to install SnapFill as a plugin
@@ -40,6 +46,7 @@ openclaw plugins install @ontos-ai/snapfill-claw
 ### Local path (development)
 
 ```bash
+npm run build
 openclaw plugins install /absolute/path/to/openclaw-plugin
 ```
 

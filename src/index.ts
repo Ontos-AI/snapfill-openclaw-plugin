@@ -1,5 +1,7 @@
+import type { OpenClawPluginApi } from 'openclaw/plugin-sdk/core';
 import { createSnapFillClient, parseSnapFillConfig } from './shared/client';
-import type { OpenClawApi, SnapFillClient } from './shared/types';
+import { resolvePluginConfig } from './shared/runtime-config';
+import type { SnapFillClient, ToolDefinition } from './shared/types';
 import { createFinalizeJobTool } from './tools/finalize-job';
 import { createGetJobResultTool } from './tools/get-job-result';
 import { createGetJobStatusTool } from './tools/get-job-status';
@@ -9,26 +11,11 @@ import { createListProfilesTool } from './tools/list-profiles';
 import { createPrepareFileTool } from './tools/prepare-file';
 import { createSubmitJobTool } from './tools/submit-job';
 
-function readPluginConfig(api: OpenClawApi): unknown {
-  if (!api.config || typeof api.config.get !== 'function') {
-    return undefined;
-  }
-
-  return (
-    api.config.get('plugins.entries.snapfill-claw.config') ??
-    api.config.get('plugins.snapfill-claw.config') ??
-    api.config.get('snapfill-claw') ??
-    api.config.get('plugins.entries.snapfill.config') ??
-    api.config.get('plugins.snapfill.config') ??
-    api.config.get('snapfill')
-  );
-}
-
-function createLazyClient(api: OpenClawApi): SnapFillClient {
+function createLazyClient(api: OpenClawPluginApi): SnapFillClient {
   let cached: SnapFillClient | undefined;
   const get = (): SnapFillClient => {
     if (!cached) {
-      cached = createSnapFillClient(parseSnapFillConfig(readPluginConfig(api)));
+      cached = createSnapFillClient(parseSnapFillConfig(resolvePluginConfig(api)));
     }
     return cached;
   };
@@ -38,25 +25,28 @@ function createLazyClient(api: OpenClawApi): SnapFillClient {
   };
 }
 
+function createSnapFillTools(client: SnapFillClient): ToolDefinition[] {
+  return [
+    createPrepareFileTool(client),
+    createListKnowledgeFilesTool(client),
+    createListProfilesTool(client),
+    createIngestInstantKnowledgeTool(client),
+    createSubmitJobTool(client),
+    createGetJobStatusTool(client),
+    createFinalizeJobTool(client),
+    createGetJobResultTool(client),
+  ];
+}
+
 export default {
   id: 'snapfill-claw',
   name: 'SnapFill Plugin',
-  register(api: OpenClawApi): void {
+  register(api: OpenClawPluginApi): void {
     const client = createLazyClient(api);
-
-    const tools = [
-      createPrepareFileTool(client),
-      createListKnowledgeFilesTool(client),
-      createListProfilesTool(client),
-      createIngestInstantKnowledgeTool(client),
-      createSubmitJobTool(client),
-      createGetJobStatusTool(client),
-      createFinalizeJobTool(client),
-      createGetJobResultTool(client),
-    ];
-
-    for (const tool of tools) {
-      api.registerTool(tool, { optional: true });
-    }
+    const tools = createSnapFillTools(client);
+    api.registerTool(() => tools, {
+      names: tools.map((tool) => tool.name),
+      optional: true,
+    });
   },
 };

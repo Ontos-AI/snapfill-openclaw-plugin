@@ -56,14 +56,16 @@ export function createIngestInstantKnowledgeTool(client: SnapFillClient): ToolDe
       required: ['entries'],
     },
     async execute(_id, params) {
-      const entries = normalizeEntries(params.entries);
+      const paramsRecord =
+        params && typeof params === 'object' ? (params as Record<string, unknown>) : {};
+      const entries = normalizeEntries(paramsRecord.entries);
       if (!entries) {
         return toToolResult(
           validationError('entries must be a non-empty array of {title, content}'),
         );
       }
 
-      const persist = typeof params.persist === 'boolean' ? params.persist : false;
+      const persist = typeof paramsRecord.persist === 'boolean' ? paramsRecord.persist : false;
       const envelope = await client.post('/knowledge/instant', {
         entries,
         persist,

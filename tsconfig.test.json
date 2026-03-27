@@ -5,5 +5,5 @@
     "moduleResolution": "Node",
     "outDir": "dist-test"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts"]
 }

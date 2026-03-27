@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseSnapFillConfig, SNAPFILL_BASE_URL } from '../src/shared/client';
 import { normalizeHttpError, normalizeTimeoutError, validationError } from '../src/shared/errors';
 import type { SnapFillClient, ToolEnvelope, ToolExecutionResult } from '../src/shared/types';
+import { resolvePluginConfig } from '../src/shared/runtime-config';
 import { createListKnowledgeFilesTool } from '../src/tools/list-knowledge-files';
 import { createSubmitJobTool } from '../src/tools/submit-job';
 
@@ -99,6 +100,77 @@ function testConfigParsing(): void {
       error.message.includes('https://www.gosnapfill.com/home/api-key');
   }
   assert(missingConfigThrown, 'missing config should also guide users to the API key page');
+}
+
+function testRuntimeConfigResolution(): void {
+  const pluginConfig = resolvePluginConfig({
+    registerTool: () => undefined,
+    pluginConfig: {
+      apiKey: 'sfk_plugin_config',
+      timeoutSeconds: 300,
+    },
+  });
+  assert(
+    (pluginConfig as Record<string, unknown>).apiKey === 'sfk_plugin_config',
+    'resolvePluginConfig should prefer api.pluginConfig when available',
+  );
+
+  const nestedConfig = resolvePluginConfig({
+    registerTool: () => undefined,
+    config: {
+      plugins: {
+        entries: {
+          'snapfill-claw': {
+            config: {
+              apiKey: 'sfk_nested_config',
+              timeoutSeconds: 300,
+            },
+          },
+        },
+      },
+    },
+  });
+  assert(
+    (nestedConfig as Record<string, unknown>).apiKey === 'sfk_nested_config',
+    'resolvePluginConfig should read nested plugin config from plain-object runtime config',
+  );
+
+  const directConfig = resolvePluginConfig({
+    registerTool: () => undefined,
+    config: {
+      apiKey: 'sfk_direct_config',
+      timeoutSeconds: 300,
+    },
+  });
+  assert(
+    (directConfig as Record<string, unknown>).apiKey === 'sfk_direct_config',
+    'resolvePluginConfig should accept plain-object plugin-scoped config',
+  );
+
+  const accessorCalls: string[] = [];
+  const accessorConfig = resolvePluginConfig({
+    registerTool: () => undefined,
+    config: {
+      get: (key: string) => {
+        accessorCalls.push(key);
+        if (key === 'plugins.entries.snapfill-claw.config') {
+          return {
+            apiKey: 'sfk_accessor_config',
+            timeoutSeconds: 300,
+          };
+        }
+        return undefined;
+      },
+    },
+  });
+  assert(
+    (accessorConfig as Record<string, unknown>).apiKey === 'sfk_accessor_config',
+    'resolvePluginConfig should continue supporting getter-based config accessors',
+  );
+  assert(
+    accessorCalls[0] === 'plugins.entries.snapfill-claw.config',
+    'resolvePluginConfig should try the current plugin id first when using config.get',
+  );
 }
 
 function createMockClient() {
@@ -239,9 +311,26 @@ function testPluginManifestAndSkillGuardrails(): void {
     fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
   ) as Record<string, unknown>;
 
-  assert(manifest.entry === './src/index.ts', 'plugin manifest should declare the entry module');
+  assert(manifest.entry === './dist/index.js', 'plugin manifest should declare the built entry module');
   assert(manifest.id === 'snapfill-claw', 'plugin manifest should align plugin id with the npm package id');
   assert(packageJson.name === '@ontos-ai/snapfill-claw', 'package name should use the published npm package id');
+  assert(packageJson.main === './dist/index.js', 'package main should point to the built entry module');
+  assert(packageJson.types === './dist/index.d.ts', 'package types should point to emitted declarations');
+  assert(
+    Array.isArray(packageJson.files) && packageJson.files.includes('dist'),
+    'package files should include the built dist directory',
+  );
+  assert(
+    Array.isArray((packageJson.openclaw as Record<string, unknown> | undefined)?.extensions) &&
+      ((packageJson.openclaw as Record<string, unknown>).extensions as unknown[]).includes(
+        './dist/index.js',
+      ),
+    'package openclaw.extensions should point to the built entry module',
+  );
+  assert(
+    (packageJson.peerDependencies as Record<string, unknown> | undefined)?.openclaw === '>=2026.3.8',
+    'package should declare an OpenClaw peer dependency compatible with the current plugin runtime',
+  );
 
   const skills = Array.isArray(manifest.skills) ? manifest.skills : [];
   assert(skills.includes('./skills/snapfill'), 'plugin manifest should bundle the snapfill skill');
@@ -311,6 +400,7 @@ function testPluginManifestAndSkillGuardrails(): void {
 async function run(): Promise<void> {
   testErrorMapping();
   testConfigParsing();
+  testRuntimeConfigResolution();
   await testSubmitJobValidation();
   await testListKnowledgeFilesQueryMapping();
   testValidationErrorFactory();
