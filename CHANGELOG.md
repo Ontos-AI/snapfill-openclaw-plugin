@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2026-03-27
+
+### Changed
+
+- Switched the bundled SnapFill backend base URL to the global production facade endpoint.
+- Strengthened missing API key guidance across the plugin runtime, skill instructions, config schema, and README.
+- Bumped the npm package version and OpenClaw plugin manifest version to `0.1.8` for release publication.
+
 ## [0.1.7] - 2026-03-25
 
 ### Changed

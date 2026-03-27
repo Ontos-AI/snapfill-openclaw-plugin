@@ -27,7 +27,7 @@ Tool list:
 ## Prerequisites
 
 - A running OpenClaw instance with plugin support
-- Valid SnapFill API key (`sfk_...`)
+- Valid SnapFill API key (`sfk_...`) from https://www.gosnapfill.com/home/api-key
 
 ## Install
 
@@ -74,6 +74,8 @@ Configure `plugins.entries.snapfill.config` in `~/.openclaw/openclaw.json`:
 
 For more responsive progress updates, keep `pollIntervalMs` around `1000`. Lower values can increase API traffic.
 
+If the plugin is installed but `apiKey` is still empty, open https://www.gosnapfill.com/home/api-key to create or copy your API key first.
+
 ## Verify Installation
 
 ```bash
@@ -116,7 +118,7 @@ OpenClaw precedence still applies:
 ## Troubleshooting
 
 - `config.apiKey is required`
-  - Ensure `plugins.entries.snapfill.config.apiKey` is set and non-empty.
+  - Get your API key from https://www.gosnapfill.com/home/api-key, then set `plugins.entries.snapfill.config.apiKey`.
 - `KNOWLEDGE_SOURCE_REQUIRED`
   - Upload knowledge files first, or allow instant knowledge ingestion from conversation history.
 - Plugin installs but tools are missing

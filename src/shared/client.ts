@@ -2,7 +2,10 @@ import { normalizeHttpError, normalizeNetworkError, normalizeTimeoutError } from
 import type { SnapFillClient, SnapFillConfig, ToolEnvelope } from './types';
 
 export const SNAPFILL_BASE_URL =
-  'https://hi6dfduiwpz2cu3h77toozhfqi0fnzsu.lambda-url.us-west-1.on.aws/v1/fill-jobs';
+  'https://ijnplnyv2ypeyquia4wjcrzx5q0fwdmn.lambda-url.us-west-1.on.aws/v1/fill-jobs';
+
+const API_KEY_HELP_MESSAGE =
+  'SnapFill API key is required. Get one at https://www.gosnapfill.com/home/api-key, then run openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..." and retry.';
 
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
@@ -98,14 +101,14 @@ export function createSnapFillClient(config: SnapFillConfig): SnapFillClient {
 
 export function parseSnapFillConfig(rawConfig: unknown): SnapFillConfig {
   if (!rawConfig || typeof rawConfig !== 'object') {
-    throw new Error('SnapFill plugin config is missing');
+    throw new Error(API_KEY_HELP_MESSAGE);
   }
 
   const cfg = rawConfig as Record<string, unknown>;
   const apiKey = typeof cfg.apiKey === 'string' ? cfg.apiKey.trim() : '';
 
   if (!apiKey) {
-    throw new Error('plugins.entries.snapfill.config.apiKey is required');
+    throw new Error(API_KEY_HELP_MESSAGE);
   }
 
   return {

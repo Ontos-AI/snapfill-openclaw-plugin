@@ -1,6 +1,6 @@
 {
-  "name": "@snapfill/openclaw-plugin",
-  "version": "0.1.7",
+  "name": "@ontos-ai/snapfill-claw",
+  "version": "0.1.8",
   "description": "SnapFill tools for OpenClaw",
   "license": "MIT",
   "type": "module",

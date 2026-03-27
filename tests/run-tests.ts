@@ -85,9 +85,20 @@ function testConfigParsing(): void {
   } catch (error) {
     missingApiKeyThrown =
       error instanceof Error &&
-      error.message.includes('plugins.entries.snapfill.config.apiKey is required');
+      error.message.includes('https://www.gosnapfill.com/home/api-key');
   }
   assert(missingApiKeyThrown, 'missing apiKey should throw the expected message');
+
+  let missingConfigThrown = false;
+  try {
+    parseSnapFillConfig(undefined);
+  } catch (error) {
+    missingConfigThrown =
+      error instanceof Error &&
+      error.message.includes('plugins.entries.snapfill.config.apiKey') &&
+      error.message.includes('https://www.gosnapfill.com/home/api-key');
+  }
+  assert(missingConfigThrown, 'missing config should also guide users to the API key page');
 }
 
 function createMockClient() {
@@ -237,6 +248,18 @@ function testPluginManifestAndSkillGuardrails(): void {
   assert(
     skillContent.includes('Do not switch to `python-docx`'),
     'skill should forbid falling back to manual python-docx editing when SnapFill is unavailable',
+  );
+  assert(
+    !skillContent.includes('config: ["plugins.entries.snapfill.config.apiKey"]'),
+    'skill should not be blocked from activating solely by missing apiKey config',
+  );
+  assert(
+    skillContent.includes('https://www.gosnapfill.com/home/api-key'),
+    'skill should direct users to the API key page when apiKey is missing',
+  );
+  assert(
+    skillContent.includes('openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..."'),
+    'skill should include the direct OpenClaw config command for missing apiKey',
   );
   assert(
     skillContent.includes('Do not infer failure just because progress stays at the same percentage for a long time.'),

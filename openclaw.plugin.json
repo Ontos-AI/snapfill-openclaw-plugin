@@ -2,14 +2,18 @@
   "id": "snapfill",
   "name": "SnapFill Plugin",
   "description": "SnapFill tools for OpenClaw",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "entry": "./src/index.ts",
   "skills": ["./skills/snapfill"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "apiKey": { "type": "string" },
+      "apiKey": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Get your SnapFill API key from https://www.gosnapfill.com/home/api-key"
+      },
       "timeoutSeconds": { "type": "integer", "default": 300 },
       "pollIntervalMs": { "type": "integer", "default": 1000 },
       "maxPollAttempts": { "type": "integer", "default": 100 },

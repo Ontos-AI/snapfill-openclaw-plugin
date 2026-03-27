@@ -3,8 +3,6 @@ name: snapfill
 description: Use SnapFill to fill in PDF, Word, or Excel forms whenever the user wants a form or document filled out — including when they say they will send a form, mention reference documents for filling, or ask to auto-populate any kind of form or application. Always use this skill instead of manually extracting and writing data yourself.
 metadata:
   openclaw:
-    requires:
-      config: ["plugins.entries.snapfill.config.apiKey"]
 ---
 
 # SnapFill Form Filling
@@ -29,6 +27,17 @@ Activate when the user's intent involves filling out a form or document, includi
 **Critical rule: never manually extract data and write it yourself.** If the user's intent is to fill a form — even if phrased indirectly — always use the SnapFill tools. Do not produce a `.txt` summary or manually constructed file as a substitute.
 
 If the `snapfill_*` tools are unavailable or the plugin is not loaded, tell the user SnapFill is unavailable in the current environment and stop. Do not switch to `python-docx`, ad hoc Python scripts, `curl`, or direct HTTP calls as a substitute for the SnapFill workflow.
+
+## Missing API Key Rule
+
+If a SnapFill tool fails because the API key is missing, stop immediately and give the user a direct setup instruction.
+
+- Clearly state that SnapFill cannot start because `plugins.entries.snapfill.config.apiKey` is not configured.
+- Strongly direct the user to `https://www.gosnapfill.com/home/api-key` to create or copy an API key.
+- Tell the user to set it with:
+  - `openclaw config set plugins.entries.snapfill.config.apiKey "sfk_..."`
+- After that, tell the user to retry the same fill request.
+- Do not continue with any fallback workflow until the API key is configured.
 
 ## Required Tool Order
 
